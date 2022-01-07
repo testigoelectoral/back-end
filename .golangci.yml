@@ -1,0 +1,32 @@
+
+linters-settings:
+    funlen:
+        lines: 100
+        statements: 50
+    gocyclo:
+        min-complexity: 10
+    golint:
+        min-confidence: 0.3
+    wsl:
+        allow-cuddle-declarations: true
+linters:
+    disable-all: true
+    enable:
+        - bodyclose
+        - deadcode
+        - errcheck
+        - funlen
+        - gocyclo
+        - goimports
+        - revive
+        - gosimple
+        - govet
+        - ineffassign
+        - staticcheck
+        - structcheck
+        - typecheck
+        - unused
+        - varcheck
+        - gosec
+        - whitespace
+        - wsl
