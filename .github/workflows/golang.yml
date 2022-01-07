@@ -1,0 +1,64 @@
+name: Golang
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  functions:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.dirs.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: GitOrigin
+        run: git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
+      - name: Get directories
+        id: dirs
+        run: |
+          function join_by { local d=${1-} f=${2-}; if shift 2; then printf %s "$f" "${@/#/$d}"; fi; }
+
+          # Excluding all "hidden" directories by: sed 's/^\..*$//g'
+          CHANGES=($(git diff origin/main --dirstat=files,0 |sed 's/^ *[0-9.]*% *//g'|sed 's/^\..*$//g'|sed 's/\/$//g'|sort -u))
+          if [[ ${#CHANGES[@]} -gt 0 ]]
+          then
+              DIRS='["'$(join_by '","' ${CHANGES[@]})'"]'
+          else
+              DIRS='[]'
+          fi
+
+          MATRIX_JSON='{"function":'${DIRS}'}'
+
+          echo "MATRIX_JSON: ${MATRIX_JSON}"
+          echo "::set-output name=matrix::${MATRIX_JSON}"
+  linter:
+    needs: [functions]
+    if: ${{ ! contains(needs.functions.outputs.matrix, '"function":[]') }}
+    strategy:
+      matrix: ${{fromJson(needs.functions.outputs.matrix)}}
+      fail-fast: false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          working-directory: ${{ matrix.function }}
+  test:
+    needs: [functions]
+    if: ${{ ! contains(needs.functions.outputs.matrix, '"function":[]') }}
+    strategy:
+      matrix: ${{fromJson(needs.functions.outputs.matrix)}}
+      fail-fast: false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup go
+        uses: actions/setup-go@v2
+      - name: Test
+        working-directory: ${{ matrix.function }}
+        run: |
+          # Running tests
+          go test

@@ -1,0 +1,44 @@
+name: Stages Callback
+on:
+  push:
+    branches:
+      - dev
+      - stage
+jobs:
+  callback:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: "Get Branch name"
+        id: branchname
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get Branch name
+          export BRANCH=$(gh api --jq '.[]|select(.commit.sha=="${{ github.event.after }}")|select(.name != ("dev") and .name != ("stage"))|.name' /repos/testigoelectoral/back-end/branches)
+          echo "BRANCH: ${BRANCH}"
+          echo "::set-output name=branch::${BRANCH}"
+
+      - name: "Get Actions to re-run"
+        shell: bash
+        id: actions
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get Actions to re-run
+          export QUERY='.workflow_runs[]|select(.head_sha=="${{ github.event.after }}")|.id'
+          echo "QUERY: ${QUERY}"
+          export ACTIONS=$(gh api --jq ${QUERY} --method GET -f status=failure -f event=pull_request -f branch=${{ steps.branchname.outputs.branch }} /repos/testigoelectoral/back-end/actions/runs)
+          echo "ACTIONS: ${ACTIONS}"
+          echo "::set-output name=actions::${ACTIONS}"
+
+      - name: "Rerun actions"
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Rerun actions
+          export ACTIONS=${{ steps.actions.outputs.actions }}
+          echo "ACTIONS: ${ACTIONS}"
+          for actionId in ${ACTIONS}; do gh run rerun ${actionId} -R "testigoelectoral/back-end" || true; done
