@@ -1,0 +1,22 @@
+name: Check Stages
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  merged-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: dev
+          fetch-depth: 20
+      - run: /usr/bin/git merge-base --is-ancestor ${{ github.event.pull_request.head.sha }} HEAD
+  merged-stage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: stage
+          fetch-depth: 20
+      - run: /usr/bin/git merge-base --is-ancestor ${{ github.event.pull_request.head.sha }} HEAD
