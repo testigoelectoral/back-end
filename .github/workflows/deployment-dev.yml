@@ -1,0 +1,62 @@
+name: Deploy DEV
+on:
+  push:
+    branches: [ dev ]
+
+jobs:
+  functions:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.dirs.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: GitOrigin
+        run: git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
+      - name: Get directories
+        id: dirs
+        run: |
+          function join_by { local d=${1-} f=${2-}; if shift 2; then printf %s "$f" "${@/#/$d}"; fi; }
+
+          # Excluding all "hidden" directories by: sed 's/^\..*$//g'
+          CHANGES=($(git diff origin/main --dirstat=files,0 |sed 's/^ *[0-9.]*% *//g'|sed 's/^\..*$//g'|sed 's/\/$//g'|sort -u))
+          if [[ ${#CHANGES[@]} -gt 0 ]]
+          then
+              DIRS='["'$(join_by '","' ${CHANGES[@]})'"]'
+          else
+              DIRS='[]'
+          fi
+
+          MATRIX_JSON='{"function":'${DIRS}'}'
+
+          echo "MATRIX_JSON: ${MATRIX_JSON}"
+          echo "::set-output name=matrix::${MATRIX_JSON}"
+  deployment:
+    needs: [functions]
+    if: ${{ ! contains(needs.functions.outputs.matrix, '"function":[]') }}
+    strategy:
+      matrix: ${{fromJson(needs.functions.outputs.matrix)}}
+      fail-fast: false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup go
+        uses: actions/setup-go@v2
+      - name: Build
+        working-directory: ${{ matrix.function }}
+        run: |
+          GOOS=linux go build main.go
+          zip ${{ matrix.function }}.zip main
+          openssl dgst -sha256 -binary ${{ matrix.function }}.zip | openssl enc -base64 > ${{ matrix.function }}.zip.sha256
+      - name: Publish artifact
+        working-directory: ${{ matrix.function }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_DEV }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_DEV }}
+          AWS_REGION: "us-west-1"
+          BUCKET: "testigoelectoral-artifacts-dev"
+          ARTIFACT_KEY: "back-end/lambda/${{ matrix.function }}/${{ matrix.function }}.zip"
+        run: |
+          aws s3 cp ${{ matrix.function }}.zip s3://${BUCKET}/${ARTIFACT_KEY}
+          aws s3 cp --content-type "text/plain" ${{ matrix.function }}.zip.sha256 s3://${BUCKET}/${ARTIFACT_KEY}.sha256

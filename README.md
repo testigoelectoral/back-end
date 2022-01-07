@@ -1,0 +1,1 @@
+# Funciones internas de Testigo Electoral
