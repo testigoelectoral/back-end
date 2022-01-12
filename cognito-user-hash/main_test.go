@@ -7,8 +7,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type mockCognitoUpdater struct{}
+
+func (u *mockCognitoUpdater) UpdateUser(string, string, map[string]string) error { //nolint:revive
+	return nil
+}
+
 func init() {
 	sedKey = "2ed5ca7088920f2b11a1f5e2f1ad9d90"
+	cognitoService = &mockCognitoUpdater{}
 }
 
 func eventRequest() events.CognitoEventUserPoolsPostConfirmation {
