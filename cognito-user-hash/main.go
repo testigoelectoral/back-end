@@ -78,7 +78,7 @@ func (u *cognitoUpdater) UpdateUser(userName string, poolId string, attributes m
 	}
 
 	parameters := &cognitoidentityprovider.AdminUpdateUserAttributesInput{
-		UserPoolId:     aws.String(""),
+		UserPoolId:     &poolId,
 		UserAttributes: changedAttributes,
 		Username:       &userName,
 	}
