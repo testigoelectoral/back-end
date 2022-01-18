@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"math"
 	"strconv"
 
@@ -19,14 +20,16 @@ func handler(event events.CognitoEventUserPoolsPreSignup) (events.CognitoEventUs
 }
 
 func validateUsername(username string) error {
+	errorMessage := fmt.Sprintf("username(Cédula):%s invlaido. Debe ser el número de la cédula, y debe contener sólo numeros", username)
+
 	intValue, err := strconv.Atoi(username)
 	if err != nil {
-		return errors.New("username es la cédula, y debe contener sólo numeros")
+		return errors.New(errorMessage)
 	}
 
 	compareString := strconv.Itoa(int(math.Abs(float64(intValue))))
 	if compareString != username {
-		return errors.New("username es la cédula, y debe contener sólo numeros")
+		return errors.New(errorMessage)
 	}
 
 	return nil

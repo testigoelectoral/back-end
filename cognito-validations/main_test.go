@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -41,7 +42,7 @@ func Test_userName(t *testing.T) {
 		response, err = handler(eventRequest(badUser, "+573211234567", "user@example.com"))
 		c.NotNil(err)
 		c.NotNil(response)
-		c.Equal("username es la cédula, y debe contener sólo numeros", err.Error())
+		c.Equal(fmt.Sprintf("username(Cédula):%s invlaido. Debe ser el número de la cédula, y debe contener sólo numeros", badUser), err.Error())
 	}
 
 	response, err = handler(eventRequest("1234567890", "+573211234567", "user@example.com"))
