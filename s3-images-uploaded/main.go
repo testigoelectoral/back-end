@@ -87,6 +87,7 @@ func createRecord(key string, s3Meta map[string]string) error {
 		OwnerSub:    subFromKey(key),
 		OwnerGPS:    gpsFromHeaders(s3Meta),
 		OwnerReport: false,
+		PageMeta:    metaFromHeaders(s3Meta),
 		CreatedAt:   s3Meta["CreateAt"],
 		UpdateAt:    s3Meta["CreateAt"],
 		OwnerQRCode: s3Meta["QR-Code"],
@@ -104,5 +105,31 @@ func gpsFromHeaders(s3Meta map[string]string) GPSRecord {
 		Latitude:  lat,
 		Longitude: lon,
 		Accuracy:  acu,
+	}
+}
+
+func metaFromHeaders(s3Meta map[string]string) PageMeta {
+	qr := s3Meta["QR-Code"]
+	if len(qr) != 21 {
+		return PageMeta{}
+	}
+
+	PageType, _ := strconv.ParseUint(qr[0:2], 10, 8)
+	LocationStateCode, _ := strconv.ParseUint(qr[2:4], 10, 8)
+	LocationMunicipalityCode, _ := strconv.ParseUint(qr[4:7], 10, 8)
+	LocationZoneCode, _ := strconv.ParseUint(qr[7:9], 10, 8)
+	LocationPlace, _ := strconv.ParseUint(qr[9:11], 10, 8)
+	LocationTable, _ := strconv.ParseUint(qr[11:14], 10, 8)
+	PageNumer, _ := strconv.ParseUint(qr[14:16], 10, 8)
+
+	return PageMeta{
+		LocationStateCode:        uint8(LocationStateCode),
+		LocationMunicipalityCode: uint8(LocationMunicipalityCode),
+		LocationZoneCode:         uint8(LocationZoneCode),
+		LocationPlace:            uint16(LocationPlace),
+		LocationTable:            uint16(LocationTable),
+		PageNumer:                uint8(PageNumer),
+		PageType:                 uint8(PageType),
+		PageQR:                   qr,
 	}
 }

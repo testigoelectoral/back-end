@@ -44,6 +44,7 @@ func (i *ImageDataFake) GetMeta(bucket string, key string) (map[string]string, e
 
 	result := map[string]string{
 		"User-Hash": options[key],
+		"QR-Code":   "711600102070110113201",
 	}
 
 	return result, nil
@@ -105,4 +106,19 @@ func eventRequest(key string) events.S3Event {
 			Object: events.S3Object{Key: *aws.String(key)},
 		}}},
 	}
+}
+
+func Test_metaFromHeaders(t *testing.T) {
+	c := require.New(t)
+
+	result := metaFromHeaders(map[string]string{"QR-Code": "711600102070110113201"})
+	c.NotNil(result)
+	c.IsType(PageMeta{}, result)
+	c.Equal(uint8(71), result.PageType)
+	c.Equal(uint8(16), result.LocationStateCode)
+	c.Equal(uint8(1), result.LocationMunicipalityCode)
+	c.Equal(uint8(2), result.LocationZoneCode)
+	c.Equal(uint16(7), result.LocationPlace)
+	c.Equal(uint16(11), result.LocationTable)
+	c.Equal(uint8(1), result.PageNumer)
 }
