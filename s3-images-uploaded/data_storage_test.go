@@ -22,8 +22,7 @@ func (d *dynamodbifaceFake) PutItem(input *dynamodb.PutItemInput) (*dynamodb.Put
 	return &dynamodb.PutItemOutput{}, nil
 }
 
-func init() {
-}
+func init() {}
 
 func Test_Save(t *testing.T) {
 	c := require.New(t)

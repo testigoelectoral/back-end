@@ -30,8 +30,7 @@ func (s *s3ifaceFake) HeadObject(input *s3.HeadObjectInput) (*s3.HeadObjectOutpu
 	return output, nil
 }
 
-func init() {
-}
+func init() {}
 
 func Test_GetMeta(t *testing.T) {
 	c := require.New(t)
