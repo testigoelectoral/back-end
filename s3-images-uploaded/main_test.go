@@ -120,5 +120,5 @@ func Test_metaFromHeaders(t *testing.T) {
 	c.Equal(uint8(2), result.LocationZoneCode)
 	c.Equal(uint16(7), result.LocationPlace)
 	c.Equal(uint16(11), result.LocationTable)
-	c.Equal(uint8(1), result.PageNumer)
+	c.Equal(uint8(1), result.PageNumber)
 }

@@ -120,7 +120,7 @@ func metaFromHeaders(s3Meta map[string]string) PageMeta {
 	LocationZoneCode, _ := strconv.ParseUint(qr[7:9], 10, 8)
 	LocationPlace, _ := strconv.ParseUint(qr[9:11], 10, 8)
 	LocationTable, _ := strconv.ParseUint(qr[11:14], 10, 8)
-	PageNumer, _ := strconv.ParseUint(qr[14:16], 10, 8)
+	PageNumber, _ := strconv.ParseUint(qr[14:16], 10, 8)
 
 	return PageMeta{
 		LocationStateCode:        uint8(LocationStateCode),
@@ -128,7 +128,7 @@ func metaFromHeaders(s3Meta map[string]string) PageMeta {
 		LocationZoneCode:         uint8(LocationZoneCode),
 		LocationPlace:            uint16(LocationPlace),
 		LocationTable:            uint16(LocationTable),
-		PageNumer:                uint8(PageNumer),
+		PageNumber:               uint8(PageNumber),
 		PageType:                 uint8(PageType),
 		PageQR:                   qr,
 	}
