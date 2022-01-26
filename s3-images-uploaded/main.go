@@ -1,0 +1,108 @@
+package main
+
+import (
+	"errors"
+	"log"
+	"os"
+	"strconv"
+	"strings"
+
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go/aws/session"
+)
+
+var (
+	cognitoPoolID string
+	userData      UserDataInterface
+	imageData     ImageDataInterface
+	dataStorage   DataStorageInterface
+)
+
+func init() {
+	sess, err := session.NewSession()
+	if err != nil {
+		panic(err)
+	}
+
+	cognitoPoolID = os.Getenv("POOL_ID")
+	userData = NewCognitoData(sess)
+	imageData = NewS3Data(sess)
+	dataStorage = NewDynamoDBStorage(sess, os.Getenv("DYNAMODB_IMAGE_TABLE"))
+}
+
+func main() {
+	lambda.Start(handler)
+}
+
+func handler(events events.S3Event) {
+	for _, record := range events.Records {
+		s3Metadata, err := validateHash(record.S3.Bucket.Name, record.S3.Object.Key)
+		if err != nil {
+			log.Printf("WARNING: Object '%s' can't be processed because: %s", record.S3.Object.Key, err.Error())
+			continue
+		}
+
+		err = createRecord(record.S3.Object.Key, s3Metadata)
+		if err != nil {
+			log.Printf("WARNING: Record for '%s' object can't be created because: %s", record.S3.Object.Key, err.Error())
+			continue
+		}
+
+		log.Printf("INFO: Record for '%s' object created", record.S3.Object.Key)
+	}
+}
+
+func subFromKey(key string) string {
+	return strings.Split(key, "/")[0]
+}
+
+func idFromKey(key string) string {
+	return strings.Split(key, "/")[1]
+}
+
+func validateHash(bucket string, key string) (map[string]string, error) {
+	sub := subFromKey(key)
+
+	userHash, err := userData.GetHash(sub)
+	if err != nil {
+		return map[string]string{}, err
+	}
+
+	s3Meta, err := imageData.GetMeta(bucket, key)
+	if err != nil {
+		return map[string]string{}, err
+	}
+
+	if userHash != s3Meta["User-Hash"] {
+		return map[string]string{}, errors.New("user hash differ of s3 header hash")
+	}
+
+	return s3Meta, nil
+}
+
+func createRecord(key string, s3Meta map[string]string) error {
+	record := ImageRecord{
+		ImageID:     idFromKey(key),
+		OwnerSub:    subFromKey(key),
+		OwnerGPS:    gpsFromHeaders(s3Meta),
+		OwnerReport: false,
+		CreatedAt:   s3Meta["CreateAt"],
+		UpdateAt:    s3Meta["CreateAt"],
+		OwnerQRCode: s3Meta["QR-Code"],
+	}
+
+	return dataStorage.Save(record)
+}
+
+func gpsFromHeaders(s3Meta map[string]string) GPSRecord {
+	lat, _ := strconv.ParseFloat(s3Meta["Latitude"], 64)
+	lon, _ := strconv.ParseFloat(s3Meta["Longitude"], 64)
+	acu, _ := strconv.ParseFloat(s3Meta["Accuracy"], 64)
+
+	return GPSRecord{
+		Latitude:  lat,
+		Longitude: lon,
+		Accuracy:  acu,
+	}
+}

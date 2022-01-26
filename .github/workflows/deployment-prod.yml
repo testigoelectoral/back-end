@@ -46,8 +46,8 @@ jobs:
       - name: Build
         working-directory: ${{ matrix.function }}
         run: |
-          GOOS=linux go build main.go
-          zip ${{ matrix.function }}.zip main
+          GOOS=linux go build .
+          zip ${{ matrix.function }}.zip ${{ matrix.function }}
           openssl dgst -sha256 -binary ${{ matrix.function }}.zip | openssl enc -base64 > ${{ matrix.function }}.zip.sha256
       - name: Publish artifact
         working-directory: ${{ matrix.function }}
