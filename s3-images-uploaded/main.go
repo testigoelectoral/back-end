@@ -90,7 +90,7 @@ func createRecord(key string, s3Meta map[string]string) error {
 		PageMeta:    metaFromHeaders(s3Meta),
 		CreatedAt:   s3Meta["CreateAt"],
 		UpdateAt:    s3Meta["CreateAt"],
-		OwnerQRCode: s3Meta["QR-Code"],
+		OwnerQRCode: s3Meta["Qr-Code"],
 	}
 
 	return dataStorage.Save(record)
@@ -109,7 +109,7 @@ func gpsFromHeaders(s3Meta map[string]string) GPSRecord {
 }
 
 func metaFromHeaders(s3Meta map[string]string) PageMeta {
-	qr := s3Meta["QR-Code"]
+	qr := s3Meta["Qr-Code"]
 	if len(qr) != 21 {
 		return PageMeta{}
 	}
