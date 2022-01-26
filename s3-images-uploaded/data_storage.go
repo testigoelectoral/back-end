@@ -14,11 +14,23 @@ type GPSRecord struct {
 	Accuracy  float64
 }
 
+type PageMeta struct {
+	LocationStateCode        uint8  // 34 States
+	LocationMunicipalityCode uint8  // Max 125 Municipalities per state (Based on 2018 elections that was Antioquia)
+	LocationZoneCode         uint8  // Max 36 Zones on same Municipality (Based on 2018 elections that was Cali)
+	LocationPlace            uint16 // max 642 Places on same Municipality (Based on 2018 elections that was Bogota)
+	LocationTable            uint16 // max 394 Tables on same Place (Based on 2018 elections that was Corferias)
+	PageNumer                uint8  // Max 13 pages
+	PageType                 uint8  // Senado(71)/Camara(72)/... etc
+	PageQR                   string //
+}
+
 type ImageRecord struct {
 	ImageID     string
 	OwnerSub    string
 	OwnerGPS    GPSRecord
 	OwnerReport bool
+	PageMeta    PageMeta
 	CreatedAt   string
 	UpdateAt    string
 	OwnerQRCode string
