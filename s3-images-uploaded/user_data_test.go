@@ -35,8 +35,7 @@ func (c *cognitoifaceFake) ListUsers(input *cognitoidentityprovider.ListUsersInp
 	return output, nil
 }
 
-func init() {
-}
+func init() {}
 
 func Test_GetHash(t *testing.T) {
 	c := require.New(t)
