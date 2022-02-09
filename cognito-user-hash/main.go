@@ -39,7 +39,7 @@ func Encrypt(text string, secretSeed string) (string, error) {
 }
 
 func handler(event events.CognitoEventUserPoolsPostConfirmation) (events.CognitoEventUserPoolsPostConfirmation, error) {
-	toHash := event.UserName + " " + event.Request.UserAttributes["name"] + " " + event.Request.UserAttributes["email"] + " " + event.Request.UserAttributes["phone_number"]
+	toHash := event.Request.UserAttributes["custom:document"] + " " + event.Request.UserAttributes["name"] + " " + event.Request.UserAttributes["email"] + " " + event.Request.UserAttributes["phone_number"]
 
 	cipherUsername, err := Encrypt(toHash, sedKey)
 	if err != nil {

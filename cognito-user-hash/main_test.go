@@ -21,14 +21,15 @@ func init() {
 func eventRequest() events.CognitoEventUserPoolsPostConfirmation {
 	event := events.CognitoEventUserPoolsPostConfirmation{
 		CognitoEventUserPoolsHeader: events.CognitoEventUserPoolsHeader{
-			UserName:   "10234567890",
+			UserName:   "HASH_USER_NAME",
 			UserPoolID: "poolId",
 		},
 		Request: events.CognitoEventUserPoolsPostConfirmationRequest{
 			UserAttributes: map[string]string{
-				"phone_number": "+12345678901234",                                                                                                                  // Max 15 chars
-				"name":         "Adolph Blaine Charles David Earl Frederick Gerald Hubert Irvin John Kenneth Lloyd Martin Nero Oliver Paul Quincy Randolph Sherma", // Max 128 chars
-				"email":        "contact-admins-hello-webmaster-services@longest-email-address-known.is-such-a-long-sub-domain-it-could-go-on-forever.pacraig.com", // Max 128 chars
+				"phone_number":    "+12345678901234",                                                                                                                  // Max 15 chars
+				"name":            "Adolph Blaine Charles David Earl Frederick Gerald Hubert Irvin John Kenneth Lloyd Martin Nero Oliver Paul Quincy Randolph Sherma", // Max 128 chars
+				"email":           "contact-admins-hello-webmaster-services@longest-email-address-known.is-such-a-long-sub-domain-it-could-go-on-forever.pacraig.com", // Max 128 chars
+				"custom:document": "10234567890",                                                                                                                      // Max 15 chars
 			},
 			ClientMetadata: map[string]string{},
 		},
