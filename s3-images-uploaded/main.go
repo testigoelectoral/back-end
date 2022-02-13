@@ -37,24 +37,22 @@ func main() {
 
 func handler(events events.S3Event) {
 	for _, record := range events.Records {
+		ImageID := idFromKey(record.S3.Object.Key)
+
 		s3Metadata, err := validateHash(record.S3.Bucket.Name, record.S3.Object.Key)
 		if err != nil {
-			log.Printf("WARNING: Object '%s' can't be processed because: %s", record.S3.Object.Key, err.Error())
+			log.Printf("WARNING: Object '%s' can't be processed because: %s", ImageID, err.Error())
 			continue
 		}
 
 		err = createRecord(record.S3.Object.Key, s3Metadata)
 		if err != nil {
-			log.Printf("WARNING: Record for '%s' object can't be created because: %s", record.S3.Object.Key, err.Error())
+			log.Printf("WARNING: Record for '%s' object can't be created because: %s", ImageID, err.Error())
 			continue
 		}
 
-		log.Printf("INFO: Record for '%s' object created", record.S3.Object.Key)
+		log.Printf("INFO: Record for '%s' object created", ImageID)
 	}
-}
-
-func subFromKey(key string) string {
-	return strings.Split(key, "/")[0]
 }
 
 func idFromKey(key string) string {
@@ -62,14 +60,12 @@ func idFromKey(key string) string {
 }
 
 func validateHash(bucket string, key string) (map[string]string, error) {
-	sub := subFromKey(key)
-
-	userHash, err := userData.GetHash(sub)
+	s3Meta, err := imageData.GetMeta(bucket, key)
 	if err != nil {
 		return map[string]string{}, err
 	}
 
-	s3Meta, err := imageData.GetMeta(bucket, key)
+	userHash, err := userData.GetHash(s3Meta["User-Sub"])
 	if err != nil {
 		return map[string]string{}, err
 	}
@@ -84,7 +80,7 @@ func validateHash(bucket string, key string) (map[string]string, error) {
 func createRecord(key string, s3Meta map[string]string) error {
 	record := ImageRecord{
 		ImageID:     idFromKey(key),
-		OwnerSub:    subFromKey(key),
+		OwnerSub:    s3Meta["User-Sub"],
 		OwnerGPS:    gpsFromHeaders(s3Meta),
 		OwnerReport: false,
 		PageMeta:    metaFromHeaders(s3Meta),

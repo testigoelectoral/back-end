@@ -14,7 +14,7 @@ import (
 type UserDataFake struct{}
 
 func (u *UserDataFake) GetHash(userSub string) (string, error) { //nolint:revive
-	if userSub == "error" {
+	if userSub == "cognitoError" {
 		return "", errors.New("BAD COGNITO")
 	}
 
@@ -31,19 +31,20 @@ func (u *UserDataFake) GetHash(userSub string) (string, error) { //nolint:revive
 type ImageDataFake struct{}
 
 func (i *ImageDataFake) GetMeta(bucket string, key string) (map[string]string, error) {
-	if key == "errors3/key" {
+	if key == "uploaded/errorS3" {
 		return map[string]string{}, errors.New("BAD S3")
 	}
 
 	options := map[string]string{
-		"sub1/name":     "hash",
-		"sub2/name":     "hash",
-		"sub3/error":    "hash",
-		"error/cognito": "hash",
+		"uploaded/name1":   "sub1",
+		"uploaded/name2":   "sub2",
+		"uploaded/error":   "sub3",
+		"uploaded/cognito": "cognitoError",
 	}
 
 	result := map[string]string{
-		"User-Hash": options[key],
+		"User-Hash": "hash",
+		"User-Sub":  options[key],
 		"Qr-Code":   "711600102070110113201",
 	}
 
@@ -74,29 +75,29 @@ func Test_Handler(t *testing.T) {
 	log.SetFlags(log.Flags() &^ (log.Ldate | log.Ltime))
 	log.SetOutput(buf)
 
-	handler(eventRequest("sub1/name"))
+	handler(eventRequest("uploaded/name1"))
 	c.NotNil(buf.String())
-	c.Equal("INFO: Record for 'sub1/name' object created\n", buf.String())
+	c.Equal("INFO: Record for 'name1' object created\n", buf.String())
 
 	buf.Reset()
-	handler(eventRequest("sub2/name"))
+	handler(eventRequest("uploaded/name2"))
 	c.NotNil(buf.String())
-	c.Equal("WARNING: Object 'sub2/name' can't be processed because: user hash differ of s3 header hash\n", buf.String())
+	c.Equal("WARNING: Object 'name2' can't be processed because: user hash differ of s3 header hash\n", buf.String())
 
 	buf.Reset()
-	handler(eventRequest("sub3/error"))
+	handler(eventRequest("uploaded/error"))
 	c.NotNil(buf.String())
-	c.Equal("WARNING: Record for 'sub3/error' object can't be created because: SAVE ERROR\n", buf.String())
+	c.Equal("WARNING: Record for 'error' object can't be created because: SAVE ERROR\n", buf.String())
 
 	buf.Reset()
-	handler(eventRequest("error/name"))
+	handler(eventRequest("uploaded/cognito"))
 	c.NotNil(buf.String())
-	c.Equal("WARNING: Object 'error/name' can't be processed because: BAD COGNITO\n", buf.String())
+	c.Equal("WARNING: Object 'cognito' can't be processed because: BAD COGNITO\n", buf.String())
 
 	buf.Reset()
-	handler(eventRequest("errors3/key"))
+	handler(eventRequest("uploaded/errorS3"))
 	c.NotNil(buf.String())
-	c.Equal("WARNING: Object 'errors3/key' can't be processed because: BAD S3\n", buf.String())
+	c.Equal("WARNING: Object 'errorS3' can't be processed because: BAD S3\n", buf.String())
 }
 
 func eventRequest(key string) events.S3Event {
